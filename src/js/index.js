@@ -1,4 +1,12 @@
-import { getAuth, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider , signInWithPopup } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { 
+    getAuth,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    GoogleAuthProvider,
+    signInWithPopup,
+    GithubAuthProvider,
+    TwitterAuthProvider 
+ } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
 const auth = getAuth();
 
@@ -88,4 +96,68 @@ window.authGoogle = () => {
             //const credential = GoogleAuthProvider.credentialFromError(error);
             // ...
         });
+}
+
+window.authGithub = () => {
+
+    const githubProvider = new GithubAuthProvider();
+    const auth = getAuth();
+
+    signInWithPopup(auth, githubProvider)
+        .then((data) => {
+            const credential = GithubAuthProvider.credentialFromResult(data);
+            const token = credential.accessToken;
+
+            // The signed-in user info.
+            const user = data.user;
+
+            console.log(credential);
+            console.log(token);
+            console.log(user);
+            alert("Iniciado correctamente desde Github");
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            const email = error.email;
+            // The AuthCredential type that was used.
+            const credential = GithubAuthProvider.credentialFromError(error);
+            console.log(error);
+        })
+}
+
+window.authTwitter = () => {
+
+    const twitterProvider = new TwitterAuthProvider();
+    const auth = getAuth();
+
+    signInWithPopup(auth, twitterProvider)
+        .then((result) => {
+        // This gives you a the Twitter OAuth 1.0 Access Token and Secret.
+        // You can use these server side with your app's credentials to access the Twitter API.
+        const credential = TwitterAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        const secret = credential.secret;
+
+        // The signed-in user info.
+        const user = result.user;
+        console.log(credential);
+        console.log(token);
+        console.log(user);
+        alert("Iniciado correctamente desde Github");
+        // ...
+    }).catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.email;
+        // The AuthCredential type that was used.
+        const credential = TwitterAuthProvider.credentialFromError(error);
+
+        console.log(error);
+        // ...
+  });
+
 }
