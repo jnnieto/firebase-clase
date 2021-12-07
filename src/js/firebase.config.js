@@ -39,7 +39,7 @@ export function verAutenticacion() {
   const auth = getAuth();
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      console.log(user);
+
       if (document.getElementById("login"))
         document.getElementById("login").style.visibility = "hidden";
 

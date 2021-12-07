@@ -8,12 +8,15 @@ import {
     TwitterAuthProvider,
     signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { doc, getDoc, getFirestore, setDoc } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+import { getStorage, uploadBytesResumable, getDownloadURL, ref } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js";
 
-import {
-    verAutenticacion
-} from './firebase.config.js';
+import { verAutenticacion } from './firebase.config.js';
 
-const auth = getAuth();
+const storage = getStorage();
+const db = getFirestore();
+var usuarioActual;
+var fotoActualizada = null;
 
 window.onload = () => {
     verAutenticacion();
@@ -80,95 +83,36 @@ window.crearUsuario = function crearUsuario() {
 window.authGoogle = () => {
 
     const provider = new GoogleAuthProvider();
-    const auth = getAuth();
+    authGeneric(provider, "Google");
 
-    signInWithPopup(auth, provider)
-        .then((result) => {
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            const token = credential.accessToken;
-            // The signed-in user info.
-            const user = result.user;
-
-            /* console.log(credential);
-            console.log(token);
-            console.log(user); */
-            alert("Iniciado correctamente desde Google");
-
-            // ...
-        }).catch((error) => {
-            //const errorCode = error.code;
-            //const email = error.email;
-            const errorMessage = error.message;
-            document.getElementById("alertErrorLogueo").style.display = "block";
-            document.getElementById("alertErrorLogueo").innerHTML = errorMessage;
-            // The AuthCredential type that was used.
-            //const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
-        });
 }
 
 window.authGithub = () => {
 
     const githubProvider = new GithubAuthProvider();
-    const auth = getAuth();
+    authGeneric(githubProvider, "GitHub");
 
-    signInWithPopup(auth, githubProvider)
-        .then((data) => {
-            const credential = GithubAuthProvider.credentialFromResult(data);
-            const token = credential.accessToken;
-
-            // The signed-in user info.
-            const user = data.user;
-
-            /* console.log(credential);
-            console.log(token);
-            console.log(user); */
-            alert("Iniciado correctamente desde Github");
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.email;
-            // The AuthCredential type that was used.
-            const credential = GithubAuthProvider.credentialFromError(error);
-            console.log(error);
-        })
 }
 
 window.authTwitter = () => {
 
     const twitterProvider = new TwitterAuthProvider();
+    authGeneric(twitterProvider, "Twitter");
+
+}
+
+const authGeneric = (provider, providerName) => {
+
     const auth = getAuth();
 
-    signInWithPopup(auth, twitterProvider)
-        .then((result) => {
-            // This gives you a the Twitter OAuth 1.0 Access Token and Secret.
-            // You can use these server side with your app's credentials to access the Twitter API.
-            const credential = TwitterAuthProvider.credentialFromResult(result);
-            const token = credential.accessToken;
-            const secret = credential.secret;
-
-            // The signed-in user info.
-            const user = result.user;
-            /* console.log(credential);
-            console.log(token);
-            console.log(user); */
-            alert("Iniciado correctamente desde Github");
-            // ...
-        }).catch((error) => {
-            // Handle Errors here.
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.email;
-            // The AuthCredential type that was used.
-            const credential = TwitterAuthProvider.credentialFromError(error);
-
-            console.log(error);
-            // ...
-        });
+    signInWithPopup(auth, provider)
+    .then((result) => {
+        actualizarPerfil(result.user, providerName);
+    })
+    .catch((error) => {
+        document.getElementById("alertErrorLogueo").style.display = "block";
+        document.getElementById("alertErrorLogueo").innerHTML = error.message;   
+    })
 
 }
 
@@ -182,12 +126,11 @@ window.iniciarSesion = () => {
         document.getElementById("alertaErrorLogeo").innerHTML = "El correo y contraseña deben ser obligatorios";
         return;
     } else {
-        const autn = getAuth();
+        const auth = getAuth();
         signInWithEmailAndPassword(auth, correo, contrasena)
             .then((userCredential) => {
                 // Signed in
-                const user = userCredential.user;
-                document.location.href = "/src/views/index.html";
+                actualizarPerfil(userCredential.user, "EmailAndPassword");
                 // ...
             })
             .catch((error) => {
@@ -199,4 +142,173 @@ window.iniciarSesion = () => {
 
     }
 
+}
+
+const actualizarPerfil = async (user, provider) => {
+    
+    const docUser = doc(db, "usuarios", user.uid);
+    const isUser = await getDoc(docUser);
+    
+    // Se valida de que el usuario exista en base de datos
+    if (isUser.exists()) {
+        console.log("Ya existe la cuenta de base de datos");
+    } else {
+            usuarioActual = user;
+            limpiarModalUpdate();
+
+            document.getElementById("txtDisplayNameUpd").value = user.displayName != null ? user.displayName : "";
+            document.getElementById("txtemail").value = user.email != null ? user.email : "";
+            document.getElementById("txttelefono").value = user.phoneNumber != null ? user.phoneNumber : "";
+            document.getElementById("imgFoto").src = user.photoURL != null ? user.photoURL : "asset/img/nouser.jpg";
+            //document.getElementById("txtprovider").value = providerName;
+            document.getElementById("txtprovider").value = user.reloadUserInfo.providerUserInfo[0].providerId;
+
+            if (provider === "google") {
+                document.getElementById("txtnombre").value = user.displayName != null ? user.displayName : "";
+            } else if (provider === "EmailAndPassword") {
+                document.getElementById("txtnombre").value = "";
+            } else if (provider === "Twitter") {
+                document.getElementById("txtemail").removeAttribute('readonly');
+                document.getElementById("txtnombre").value = "";
+            } else if (provider === "GitHub") {
+                document.getElementById("txtnombre").value = "";
+            }
+
+            $("#modalUpdate").modal('show');
+
+    }
+
+}
+
+function limpiarModalUpdate() {
+
+    document.getElementById("alertaActulizacionRegistro").style.display = "none";
+    document.getElementById("alertaActulizacionRegistro").innerHTML = "";
+    document.getElementById("progressUploadPhoto").style.visibility = "hidden";
+    document.getElementById("txtDisplayNameUpd").value = "";
+    document.getElementById("txtnombre").value = "";
+    document.getElementById("txtapellido").value = "";
+    document.getElementById("txtemail").value = "";
+    document.getElementById("txttelefono").value = "";
+    document.getElementById("txtprovider").value = "";
+    document.getElementById("imgFoto").src = null;
+
+}
+
+
+window.cambiarFoto = function cambiarFoto(archivo) {
+
+    document.getElementById("buttonEditPerfil").disabled = true;
+    const file = archivo.files[0];
+    const reader = new FileReader();
+    reader.onloadend = function () {
+        document.getElementById("progressUploadPhoto").style.visibility = "visible";
+
+        document.getElementById("imgFoto").src = reader.result;
+        const imageRef = ref(storage, 'fotoPerfil/' + usuarioActual.uid);
+        const uploadTask = uploadBytesResumable(imageRef, file);
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+            },
+            (error) => {
+                document.getElementById("buttonEditPerfil").disabled = false;
+                document.getElementById("progressUploadPhoto").style.visibility = "hidden";
+                $('.progress-bar').css('width', '0%').attr('aria-valuenow', 0);
+                document.getElementById("alertaActulizacionRegistro").style.display = "block";
+                document.getElementById("alertaActulizacionRegistro").innerHTML = error.message;
+            },
+            () => {
+                document.getElementById("buttonEditPerfil").disabled = false;
+                document.getElementById("progressUploadPhoto").style.visibility = "hidden";
+                $('.progress-bar').css('width', '0%').attr('aria-valuenow', 0);
+                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                    fotoActualizada = downloadURL;
+                });
+            }
+        );
+
+    }
+    reader.readAsDataURL(file);
+}
+
+window.editarPerfil = function editarPerfil() {
+
+    const displayName = document.getElementById("txtDisplayNameUpd").value;
+    const nombre = document.getElementById("txtnombre").value;
+    const apellido = document.getElementById("txtapellido").value;
+    const email = document.getElementById("txtemail").value;
+    const telefono = document.getElementById("txttelefono").value;
+    const provedor = document.getElementById("txtprovider").value;
+    let imgFoto = document.getElementById("imgFoto").src;
+  
+  
+    if (displayName == "") {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe ingresar un display Name";
+      return;
+    }
+    if (email == "") {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe ingresar un email";
+      return;
+    }
+    if (nombre == "") {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe ingresar un nombre";
+      return;
+    }
+    if (apellido == "") {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe ingresar un apellido";
+      return;
+    }
+    if (imgFoto.includes('asset/img/nouser.jpg')) {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe seleccionar una foto";
+      return;
+    }
+    if (telefono == "") {
+      document.getElementById("alertaActulizacionRegistro").style.display = "block";
+      document.getElementById("alertaActulizacionRegistro").innerHTML = "Debe ingresar un telefono";
+      return;
+    }
+  
+    if(fotoActualizada != null)
+         imgFoto = fotoActualizada;
+
+
+    setDoc(doc(db, "usuario", usuarioActual.uid), {
+            nombre: nombre,
+            apellido: apellido,
+            email: email,
+            displayName: displayName,
+            telefono: telefono,
+            provedor: provedor,
+            imgFoto: imgFoto,
+    }).then(() => {
+        editarAutorizacion(displayName, imgFoto);
+    }).catch((error) =>{
+        document.getElementById("alertaActulizacionRegistro").style.display = "block";
+        document.getElementById("alertaActulizacionRegistro").innerHTML = error.message;
+    });
+
+}
+
+function editarAutorizacion(displayName, photoURL) {
+
+    const auth =  getAuth();
+    updateProfile(auth.currentUser, {
+        displayName: displayName,
+        photoURL: photoURL
+    }).then(() => {
+        alert("Usuario editado correctamente");
+        document.location.href = "/src/views/";
+    }).catch((error) => {
+        const errorMessage = error.message;
+        document.getElementById("alertaActulizacionRegistro").style.display = "block";
+        document.getElementById("alertaActulizacionRegistro").innerHTML = errorMessage;
+    });
 }
