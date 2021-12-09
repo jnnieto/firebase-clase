@@ -1,6 +1,6 @@
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js";
-import { getStorage  } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-storage.js";
-import { verAutenticacion } from "./firebase.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+import { getStorage  } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js";
+import { verAutenticacion } from "../js/firebase.config.js";
 
 const db = getFirestore();
 const storage = getStorage();
@@ -11,54 +11,33 @@ window.onload = function () {
     cargarRestaurantes();
 }
 
-function cargarRestaurantes(){
+const cargarRestaurantes = async () => {
 
-    let contenido="<table class='table mt-2'>";
-
-    contenido+="<thead>";
-    contenido+="<tr>";
-
-    contenido+="<th>Id</th>";
-    contenido+="<th>Nombre</th>";
-    contenido+="<th>Direccion</th>";
-    contenido+="<th>Foto</th>";
-    contenido+="<th>Menu</th>";
-    contenido+="<th>Rating</th>";
-    contenido+="<th>Opciones</th>";
-
-    contenido+="</tr>";
-    contenido+="</thead>";
-
-    contenido+="<tbody>";
+    let contenido="";
     
-    const q = query(collection(db, "resturante"), where("visible", "==", true));
-    getDocs(q).then(querySnapshot =>{
-
-        querySnapshot.forEach(rpta => {
-            //console.log(rpta.id, " => ", rpta.data());
-            const fila=rpta.data();
-            contenido+="<tr>";
-            contenido+="<td>"+rpta.id+"</td>";
-            contenido+="<td>"+fila.nombre+"</td>";
-            contenido+="<td>"+fila.direccion+"</td>";
-            contenido+="<td><img src=" + fila.foto + " width=\"100\" height=\"100\" /></td>";
-            contenido+="<td>" + fila.menu + "</td>";
-            contenido+="<td>"+ calularRating(fila.rating) +"</td>";
-            contenido+="<td>";
-            contenido+="<input type='button' class='btn btn-primary' value='Editar' onclick='abrirModal(\""+rpta.id+"\")' data-toggle='modal' data-target='#exampleModal' />";
-            contenido+="<input type='button' value='Eliminar' class='btn btn-danger' onclick='eliminar(\""+rpta.id+"\")' />";
-            contenido+="</td>";
-            contenido+="</tr>";
-
-        });
-
-        contenido+="</tbody>";
-        contenido+="</table>";
-        document.getElementById("divRestaurante").innerHTML=contenido;
-
-    }).catch((error) => {
-        console.log(error);
+    const q = query(collection(db, "restaurantes"), where("estado", "==", true));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(rpta => {
+        const fila = rpta.data();
+        contenido+="<div class='col-lg-4 mb-4'>";
+        contenido+="<div class='card'>";
+        contenido+="<img src=" + fila.foto + " alt='' class='card-img-top'>";
+        contenido+="<div class='card-body'>";
+        contenido+="<h5 class='card-title'>" + fila.nombre + "</h5>";
+        contenido+="<p class='card-text'><strong>Direccion: </strong>" + fila.direccion + "</p>";
+        contenido+= calularRating(fila.rating);
+        contenido+="<div class='icon-block'>";
+        contenido+="<a href='"+ fila.menu + "' target='_blank'><i class='fa fa-eye'></i> Ver menu</a></br>";
+        contenido+="<a href='' target='_blank'><i class='fa fa-comments'></i> Ver comentarios</a>"
+        contenido+="</div>"
+        contenido+="<input type='button' class='btn btn-success' value='Editar' onclick='abrirModal(\""+rpta.id+"\")' data-toggle='modal' data-target='#exampleModal' />";
+        contenido+="<input type='button' value='Eliminar' class='btn btn-danger' onclick='eliminar(\""+rpta.id+"\")' />";
+        contenido+="</div>";
+        contenido+="</div>";
+        contenido+="</div>";
     });
+
+    document.getElementById("restaurante").innerHTML=contenido;
 }
 
 function calularRating(rating){

@@ -146,35 +146,35 @@ window.iniciarSesion = () => {
 
 const actualizarPerfil = async (user, provider) => {
     
-    const docUser = doc(db, "usuarios", user.uid);
+    const docUser = doc(db, "usuario", user.uid);
     const isUser = await getDoc(docUser);
     
     // Se valida de que el usuario exista en base de datos
     if (isUser.exists()) {
-        console.log("Ya existe la cuenta de base de datos");
+        document.location.href = "/src/views/";
     } else {
-            usuarioActual = user;
-            limpiarModalUpdate();
+        usuarioActual = user;
+        limpiarModalUpdate();
 
-            document.getElementById("txtDisplayNameUpd").value = user.displayName != null ? user.displayName : "";
-            document.getElementById("txtemail").value = user.email != null ? user.email : "";
-            document.getElementById("txttelefono").value = user.phoneNumber != null ? user.phoneNumber : "";
-            document.getElementById("imgFoto").src = user.photoURL != null ? user.photoURL : "asset/img/nouser.jpg";
-            //document.getElementById("txtprovider").value = providerName;
-            document.getElementById("txtprovider").value = user.reloadUserInfo.providerUserInfo[0].providerId;
+        document.getElementById("txtDisplayNameUpd").value = user.displayName != null ? user.displayName : "";
+        document.getElementById("txtemail").value = user.email != null ? user.email : "";
+        document.getElementById("txttelefono").value = user.phoneNumber != null ? user.phoneNumber : "";
+        document.getElementById("imgFoto").src = user.photoURL != null ? user.photoURL : "asset/img/nouser.jpg";
+        //document.getElementById("txtprovider").value = providerName;
+        document.getElementById("txtprovider").value = user.reloadUserInfo.providerUserInfo[0].providerId;
 
-            if (provider === "google") {
-                document.getElementById("txtnombre").value = user.displayName != null ? user.displayName : "";
-            } else if (provider === "EmailAndPassword") {
-                document.getElementById("txtnombre").value = "";
-            } else if (provider === "Twitter") {
-                document.getElementById("txtemail").removeAttribute('readonly');
-                document.getElementById("txtnombre").value = "";
-            } else if (provider === "GitHub") {
-                document.getElementById("txtnombre").value = "";
-            }
+        if (provider === "google") {
+            document.getElementById("txtnombre").value = user.displayName != null ? user.displayName : "";
+        } else if (provider === "EmailAndPassword") {
+            document.getElementById("txtnombre").value = "";
+        } else if (provider === "Twitter") {
+            document.getElementById("txtemail").removeAttribute('readonly');
+            document.getElementById("txtnombre").value = "";
+        } else if (provider === "GitHub") {
+            document.getElementById("txtnombre").value = "";
+        }
 
-            $("#modalUpdate").modal('show');
+        $("#modalUpdate").modal('show');
 
     }
 
