@@ -1,6 +1,7 @@
 import { getFirestore, collection, query, where, getDocs , doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL  } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js";
 import { verAutenticacion } from "../js/firebase.config.js";
+import { realizarComentario } from "./comentarios.js";
 
 const db = getFirestore();
 const storage = getStorage();
@@ -33,6 +34,7 @@ const cargarRestaurantes = async () => {
         contenido+="</div>"
         contenido+="<input type='button' class='btn btn-success' value='Editar' onclick='abrirModal(\""+rpta.id+"\")' data-toggle='modal' data-target='#exampleModal' />";
         contenido+="<input type='button' value='Eliminar' class='btn btn-danger' onclick='eliminar(\""+rpta.id+"\")' />";
+        contenido+="<input type='button' value='Comentar' class='btn btn-secondary'  data-toggle='modal' data-target='#commentModal' onclick='abrirModalComentario(\""+ fila.nombre +"\", \""+rpta.id+"\")' />";
         contenido+="</div>";
         contenido+="</div>";
         contenido+="</div>";
@@ -65,7 +67,7 @@ window.abrirModal = function abrirModal(idRestaurante) {
         idRestauranteGolbal = idRestaurante;
         cargarDatos(idRestaurante);
     }
-
+    
 }
 
 const cargarDatos = (idRestaurante) => {
@@ -79,14 +81,14 @@ const cargarDatos = (idRestaurante) => {
             document.getElementById("txtdireccion").value = data.direccion;
             document.getElementById("imgFoto").src = data.foto;
             document.getElementById("iframePreview").src = data.menu;
-
+            
         } else {
             alert("No se puede encontrar el restuarante");
         }
     }).catch((error) => {
         alert("Ocurrio un error" + error.message);
     });
-
+    
 }
 
 const limpiarDatos = () => {
@@ -341,3 +343,22 @@ window.eliminar =  function eliminar(idRestaurante) {
     });
 
 }
+
+window.abrirModalComentario = function abrirModalComentario(nombre, idRestaurante) {
+    document.getElementById("lblComentario").innerHTML = `Qué te ha parecido el restaurante ${ nombre } ?`;
+    idRestauranteGolbal = idRestaurante;
+}
+
+window.agregarComentario = function agregarComentario() {
+    
+    const comment = document.getElementById("txt-comentario").value;
+    const calificacion = document.getElementById("txt-calificacion").value;
+
+    const comentario = {
+        comentario: comment,
+        calificacion
+    }
+
+    realizarComentario(idRestauranteGolbal, comentario);
+
+} 
