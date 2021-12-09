@@ -28,6 +28,7 @@ window.salir = () => {
   signOut(auth)
     .then(() => {
       document.location.href = "/src/views/index.html";
+      sessionStorage.removeItem('uid')
     })
     .catch((error) => {
       alert("Se produce error al cerrar al sesión");
@@ -39,7 +40,7 @@ export function verAutenticacion() {
   const auth = getAuth();
   onAuthStateChanged(auth, (user) => {
     if (user) {
-
+      sessionStorage.setItem('uid', user.uid);
       if (document.getElementById("login"))
         document.getElementById("login").style.visibility = "hidden";
 
@@ -60,4 +61,5 @@ export function verAutenticacion() {
     }
   });
 }
+
 

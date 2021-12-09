@@ -10,3 +10,10 @@
 .btn {
     margin: 10px;
 }
+
+.imagen {
+    width: 250px;
+    height: 250px;
+    padding: 10px;
+    margin-left: 50px;
+}

@@ -281,6 +281,7 @@ window.editarPerfil = function editarPerfil() {
 
 
     setDoc(doc(db, "usuario", usuarioActual.uid), {
+            id: usuarioActual.uid,
             nombre: nombre,
             apellido: apellido,
             email: email,
