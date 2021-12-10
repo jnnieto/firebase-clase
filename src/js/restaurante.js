@@ -1,4 +1,4 @@
-import { getFirestore, collection, query, where, getDocs , doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs , doc, setDoc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL  } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js";
 import { verAutenticacion } from "../js/firebase.config.js";
 import { realizarComentario } from "./comentarios.js";
@@ -30,7 +30,7 @@ const cargarRestaurantes = async () => {
         contenido+= calularRating(fila.rating);
         contenido+="<div class='icon-block'>";
         contenido+="<a href='"+ fila.menu + "' target='_blank'><i class='fa fa-eye'></i> Ver menu</a></br>";
-        contenido+="<a href='' target='_blank'><i class='fa fa-comments'></i> Ver comentarios</a>"
+        contenido+="<button type='button' class='btn btn-primary' onclick='verComentarios(\""+rpta.id+"\")'><i class='fa fa-comments'></i> Ver comentarios</button>"
         contenido+="</div>"
         contenido+="<input type='button' class='btn btn-success' value='Editar' onclick='abrirModal(\""+rpta.id+"\")' data-toggle='modal' data-target='#exampleModal' />";
         contenido+="<input type='button' value='Eliminar' class='btn btn-danger' onclick='eliminar(\""+rpta.id+"\")' />";
@@ -362,3 +362,34 @@ window.agregarComentario = function agregarComentario() {
     realizarComentario(idRestauranteGolbal, comentario);
 
 } 
+
+window.verComentarios =  function verComentarios(idRestaurante) {
+
+    const q = query(collection(db, `restaurantes/${ idRestaurante }/comentarios`));
+
+    let modal="<div class='modal-header'>";
+    const subscribe =  onSnapshot(q, async (querySnapshot) => {
+        modal+="<h4 class='modal-title' id='myModalLabel'>Comentarios del restaurante tal..</h4>";
+        modal+="<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>×</button>";
+        modal+="</div>";
+        modal+="<div class='modal-body'>";
+        modal+="<ol class='list-group list-group-numbered'>"
+        await querySnapshot.forEach(rtpa => {
+            let fila = rtpa.data();
+            modal+="<li class='list-group-item d-flex justify-content-between align-items-start'>";
+            modal+="<div class='ms-2 me-auto'>";
+            modal+="<div class='fw-bold'><img src=" + fila.usuario.foto + " alt='' class='card-img-top imagen-comment'><strong>" + fila.usuario.displayName + "</strong></div>";
+            modal+="Comentario: " + fila.comentario + "</div>"
+            modal+="<span class='badge bg-primary rounded-pill'>" + calularRating(fila.calificacion) + "</span>";
+            modal+="</li>";
+        });
+        modal+="</ol>";
+        modal+="</div>";
+        modal+="<div class='modal-footer'>";
+        modal+="<button type='button' class='btn btn-info waves-effect' data-dismiss='modal'>Close</button>"
+        modal+="</div>";
+        document.getElementById("comments").innerHTML=modal;
+        $("#modal-commets").modal('show');
+    });
+
+}

@@ -52,5 +52,17 @@ const editarRating = (idRestaurante, rating) => {
 
 }
 
+function calularRating(rating){
+    let modal = "<div>";
+    for(let i = 1; i <= 5; i++) {
+        if(rating >= i)
+            modal += "<span class=\"fa fa-star checked\"></span>";
+        else    
+            modal += "<span class=\"fa fa-star \"></span>";
+    }
+    modal += "</div>";
+    return modal;
+}
+
 
 

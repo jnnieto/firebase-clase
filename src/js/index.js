@@ -6,7 +6,9 @@ import {
     signInWithPopup,
     GithubAuthProvider,
     TwitterAuthProvider,
-    signInWithEmailAndPassword
+    signInWithEmailAndPassword,
+    OAuthProvider,
+    FacebookAuthProvider
 } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { doc, getDoc, getFirestore, setDoc } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
 import { getStorage, uploadBytesResumable, getDownloadURL, ref } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-storage.js";
@@ -94,10 +96,24 @@ window.authGithub = () => {
 
 }
 
+window.authFacebook = () => {
+
+    const githubProvider = new FacebookAuthProvider();
+    authGeneric(githubProvider, "Facebook");
+
+}
+
 window.authTwitter = () => {
 
     const twitterProvider = new TwitterAuthProvider();
     authGeneric(twitterProvider, "Twitter");
+
+}
+
+window.authMicrosoft = () => {
+
+    const microsoftProvider = new OAuthProvider('microsoft.com');
+    authGeneric(microsoftProvider, "Microsoft");
 
 }
 
@@ -163,7 +179,7 @@ const actualizarPerfil = async (user, provider) => {
         //document.getElementById("txtprovider").value = providerName;
         document.getElementById("txtprovider").value = user.reloadUserInfo.providerUserInfo[0].providerId;
 
-        if (provider === "google") {
+        if (provider === "google" || provider === "Microsoft" || provider === "Facebook") {
             document.getElementById("txtnombre").value = user.displayName != null ? user.displayName : "";
         } else if (provider === "EmailAndPassword") {
             document.getElementById("txtnombre").value = "";
